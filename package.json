@@ -9,9 +9,9 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "tsdown --watch ./src --onSuccess \"node dist/server.cjs\"",
+    "dev": "concurrently \"npm run css:watch\" \"tsdown --watch ./src --onSuccess \\\"node dist/server.cjs\\\"\"",
     "start": "node dist/server.cjs",
-    "build": "tsdown",
+    "build": "npm run css:build && tsdown",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -23,6 +23,9 @@
     "db:studio": "prisma studio",
     "test": "vitest run",
     "test:watch": "vitest",
+    "css:build": "tailwindcss -i ./src/interfaces/http/web/assets/input.css -o ./public/assets/app.css --minify",
+    "css:watch": "tailwindcss -i ./src/interfaces/http/web/assets/input.css -o ./public/assets/app.css --watch",
+    "test:e2e": "playwright test",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -41,16 +44,23 @@
     "@commitlint/cli": "^20.2.0",
     "@commitlint/config-conventional": "^20.2.0",
     "@eslint/js": "^9.39.2",
+    "@playwright/test": "^1.57.0",
+    "@tailwindcss/cli": "^4.1.18",
+    "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^25.0.3",
+    "@types/nunjucks": "^3.2.6",
     "@types/pg": "^8.16.0",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
     "ioredis": "^5.8.2",
     "lint-staged": "^16.2.7",
     "pg": "^8.16.3",
+    "postcss": "^8.5.6",
     "prettier": "^3.7.4",
     "prisma": "^7.2.0",
+    "tailwindcss": "^4.1.18",
     "testcontainers": "^11.10.0",
     "tsdown": "^0.18.2",
     "typescript": "^5.9.3",
@@ -59,10 +69,14 @@
     "vitest": "^4.0.16"
   },
   "dependencies": {
+    "@fastify/formbody": "^8.0.2",
+    "@fastify/static": "^8.3.0",
+    "@fastify/view": "^11.1.1",
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
     "dotenv": "^17.2.3",
     "fastify": "^5.6.2",
+    "nunjucks": "^3.2.4",
     "zod": "^4.2.1"
   }
 }

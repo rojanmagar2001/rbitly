@@ -13,6 +13,7 @@
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
+    "esModuleInterop": true,
     "types": ["node", "vitest/globals"],
     "baseUrl": ".",
     "paths": {
@@ -24,7 +25,8 @@
     "test/**/*.ts",
     "vitest.config.ts",
     "tsdown.config.ts",
-    "prisma.config.ts"
+    "prisma.config.ts",
+    "playwright.config.ts"
   ],
   "exclude": ["node_modules", "dist"]
 }

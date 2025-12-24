@@ -1,0 +1,51 @@
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title | default("rbitly") }}</title>
+    <meta name="description" content="Shorten URLs with a clean, fast interface." />
+    <link rel="stylesheet" href="/assets/app.css" />
+  </head>
+  <body class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 text-slate-900 antialiased">
+    <!-- Header with glass morphism -->
+    <header class="sticky top-0 z-50 border-b border-slate-200/60 bg-white/70 backdrop-blur-xl">
+      <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
+        <a href="/" class="group inline-flex items-center gap-3 transition-transform hover:scale-[1.02]">
+          <div class="relative">
+            <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 opacity-0 blur transition group-hover:opacity-20"></div>
+            <span class="relative grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/25 transition group-hover:shadow-xl group-hover:shadow-blue-500/30">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+            </span>
+          </div>
+          <span class="text-xl font-bold tracking-tight">rbitly</span>
+        </a>
+        <nav class="flex items-center gap-2">
+          <a class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20" href="/health">
+            Health
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="mx-auto max-w-5xl px-4 pb-12 pt-8 sm:px-6">
+      <div class="rounded-2xl border border-slate-200/60 bg-white/50 p-6 backdrop-blur">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <p class="text-sm leading-relaxed text-slate-600">
+            Built with <span class="font-medium text-slate-900">Fastify</span> + <span class="font-medium text-slate-900">Nunjucks</span> + <span class="font-medium text-slate-900">Tailwind</span>
+          </p>
+          <p class="text-xs text-slate-500">Privacy-friendly analytics (hashed IP)</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="/assets/app.js" defer></script>
+  </body>
+</html>
