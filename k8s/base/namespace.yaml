@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rbitly
+  labels:
+    name: rbitly
+    app: rbitly

@@ -16,8 +16,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "postinstall": "prisma generate",
-    "prisma:generate": "prisma generate",
+    "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev --create-only",
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
@@ -26,7 +25,25 @@
     "css:build": "tailwindcss -i ./src/interfaces/http/web/assets/input.css -o ./public/assets/app.css --minify",
     "css:watch": "tailwindcss -i ./src/interfaces/http/web/assets/input.css -o ./public/assets/app.css --watch",
     "test:e2e": "playwright test",
-    "prepare": "husky"
+    "docker:build": "docker build -t rbitly:local .",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down -v",
+    "docker:logs": "docker compose logs -f app",
+    "docker:ps": "docker compose ps",
+    "docker:migrate": "docker compose exec app pnpm prisma migrate deploy",
+    "k8s:deploy": "bash scripts/k8s-deploy.sh",
+    "k8s:cleanup": "bash scripts/k8s-cleanup.sh",
+    "k8s:logs": "bash scripts/k8s-logs.sh",
+    "k8s:logs:app": "bash scripts/k8s-logs.sh app",
+    "k8s:logs:postgres": "bash scripts/k8s-logs.sh postgres",
+    "k8s:logs:redis": "bash scripts/k8s-logs.sh redis",
+    "k8s:logs:migrate": "bash scripts/k8s-logs.sh migrate",
+    "k8s:status": "kubectl -n rbitly get all",
+    "k8s:restart": "kubectl -n rbitly rollout restart deployment/rbitly && kubectl -n rbitly rollout status deployment/rbitly",
+    "k8s:rebuild": "docker build -t rbitly:local . && kind load docker-image rbitly:local --name rbitly && pnpm k8s:restart",
+    "k8s:shell": "kubectl -n rbitly get pods && echo '\nEnter pod name:' && read pod && kubectl -n rbitly exec -it $pod -- sh",
+    "k8s:psql": "kubectl -n rbitly exec -it statefulset/postgres -- psql -U rbitly -d rbitly",
+    "k8s:redis": "kubectl -n rbitly exec -it statefulset/redis -- redis-cli"
   },
   "lint-staged": {
     "**/*.{ts,tsx}": [
@@ -59,7 +76,6 @@
     "pg": "^8.16.3",
     "postcss": "^8.5.6",
     "prettier": "^3.7.4",
-    "prisma": "^7.2.0",
     "tailwindcss": "^4.1.18",
     "testcontainers": "^11.10.0",
     "tsdown": "^0.18.2",
@@ -80,6 +96,7 @@
     "nunjucks": "^3.2.4",
     "pino": "^10.1.0",
     "pino-pretty": "^13.1.3",
+    "prisma": "^7.2.0",
     "prom-client": "^15.1.3",
     "zod": "^4.2.1"
   }

@@ -1,0 +1,138 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rbitly-migrate
+  namespace: rbitly
+spec:
+  template:
+    metadata:
+      labels:
+        app: rbitly-migrate
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:16-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h postgres -U rbitly -d rbitly; do
+                echo "Waiting for postgres..."
+                sleep 2
+              done
+          env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rbitly-secret
+                  key: POSTGRES_PASSWORD
+      containers:
+        - name: migrate
+          image: rbitly:local
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              echo "Running database migrations..."
+              node_modules/.bin/prisma migrate deploy
+          envFrom:
+            - configMapRef:
+                name: rbitly-config
+            - secretRef:
+                name: rbitly-secret
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rbitly
+  namespace: rbitly
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rbitly
+  template:
+    metadata:
+      labels:
+        app: rbitly
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:16-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h postgres -U rbitly -d rbitly; do
+                echo "Waiting for postgres..."
+                sleep 2
+              done
+          env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rbitly-secret
+                  key: POSTGRES_PASSWORD
+        - name: wait-for-redis
+          image: redis:7-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until redis-cli -h redis ping; do
+                echo "Waiting for redis..."
+                sleep 2
+              done
+      containers:
+        - name: rbitly
+          image: rbitly:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: rbitly-config
+            - secretRef:
+                name: rbitly-secret
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rbitly
+  namespace: rbitly
+spec:
+  selector:
+    app: rbitly
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+      name: http
+  type: ClusterIP

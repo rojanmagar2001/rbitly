@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rbitly-config
+  namespace: rbitly
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  HOST: "0.0.0.0"
+  DATABASE_URL: "postgresql://rbitly:rbitly@postgres:5432/rbitly?schema=public"
+  REDIS_URL: "redis://redis:6379"
