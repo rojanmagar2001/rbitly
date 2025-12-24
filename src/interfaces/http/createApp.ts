@@ -1,9 +1,11 @@
 import fastify, { type FastifyInstance } from "fastify";
 import { registerHealthRoute } from "./routes/health";
 import type { AppDeps } from "./types";
-import { CreateLinkUseCase } from "@/applications/use-cases/CreateLinkUseCase";
-import { registerLinkRoutes } from "./routes/routes/links";
+import { CreateLinkUseCase } from "@/application/use-cases/CreateLinkUseCase";
+import { registerLinkRoutes } from "./routes/links";
 import { registerErrorHandler } from "./error/errorHandler";
+import { ResolveLinkUseCase } from "@/application/use-cases/ResolveLinkUseCase";
+import { registerRedirectRoute } from "./routes/redirect";
 
 export type CreateAppOptions = {
   logger?: boolean;
@@ -22,13 +24,23 @@ export async function createApp(options: CreateAppOptions): Promise<FastifyInsta
 
   await registerHealthRoute(app);
 
-  const linkUseCase = new CreateLinkUseCase(options.deps.linkRepository, {
+  const createLinkUseCase = new CreateLinkUseCase(options.deps.linkRepository, {
     ipHashSalt: options.deps.ipHashSalt,
     codeLength: 7,
     maxRetries: 5,
   });
 
-  await registerLinkRoutes(app, { ipHashSalt: options.deps.ipHashSalt, linkUseCase });
+  const resolveLinkUseCase = new ResolveLinkUseCase(
+    options.deps.linkRepository,
+    options.deps.linkCache,
+    { defaultCacheTtlSeconds: 60 * 60 },
+  );
+
+  await registerLinkRoutes(app, {
+    ipHashSalt: options.deps.ipHashSalt,
+    linkUseCase: createLinkUseCase,
+  });
+  await registerRedirectRoute(app, { resolveLinkUseCase });
 
   return app;
 }

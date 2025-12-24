@@ -9,11 +9,8 @@ export abstract class AppError extends Error {
   public abstract readonly code: AppErrorCode;
 
   constructor(message: string, options?: { cause?: unknown }) {
-    super(message);
+    // Pass cause to Error when present (Node 20 supports it)
+    super(message, options?.cause !== undefined ? { cause: options.cause } : undefined);
     this.name = this.constructor.name;
-    if (options!.cause) {
-      // Node 16+ supports cause, but TS typing depends on lib; keep explicit field
-      (this as unknown as { cause: unknown }).cause = options?.cause;
-    }
   }
 }

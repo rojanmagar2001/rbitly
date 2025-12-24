@@ -26,7 +26,7 @@ describe("POST /api/links", () => {
   it("creates a link with generated code", async () => {
     const app = await createApp({
       logger: false,
-      deps: { linkRepository: makeRepo(), ipHashSalt: "test-salt" },
+      deps: { linkRepository: makeRepo(), linkCache: null, ipHashSalt: "test-salt" },
     });
 
     const res = await app.inject({
@@ -49,7 +49,7 @@ describe("POST /api/links", () => {
   it("creates a link with customAlias as code", async () => {
     const app = await createApp({
       logger: false,
-      deps: { linkRepository: makeRepo(), ipHashSalt: "test-salt" },
+      deps: { linkRepository: makeRepo(), linkCache: null, ipHashSalt: "test-salt" },
     });
 
     const res = await app.inject({
@@ -68,7 +68,7 @@ describe("POST /api/links", () => {
   it("returns 400 for invalid url", async () => {
     const app = await createApp({
       logger: false,
-      deps: { linkRepository: makeRepo(), ipHashSalt: "test-salt" },
+      deps: { linkRepository: makeRepo(), linkCache: null, ipHashSalt: "test-salt" },
     });
 
     const res = await app.inject({

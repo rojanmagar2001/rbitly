@@ -15,7 +15,7 @@ describe("GET /health", () => {
   it("returns 200 with status ok", async () => {
     const app = await createApp({
       logger: false,
-      deps: { linkRepository: noopRepo, ipHashSalt: "test-salt" },
+      deps: { linkRepository: noopRepo, linkCache: null, ipHashSalt: "test-salt" },
     });
 
     const res = await app.inject({

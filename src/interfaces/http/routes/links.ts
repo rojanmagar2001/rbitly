@@ -1,4 +1,4 @@
-import type { CreateLinkUseCase } from "@/applications/use-cases/CreateLinkUseCase";
+import type { CreateLinkUseCase } from "@/application/use-cases/CreateLinkUseCase";
 import { hashIp } from "@/domain/security/hashIp";
 import type { FastifyInstance } from "fastify";
 import z from "zod";
