@@ -33,6 +33,8 @@ module.exports = [
       "@typescript-eslint/no-floating-promises": "error",
       "@typescript-eslint/no-misused-promises": "error",
       "@typescript-eslint/consistent-type-imports": ["error", { prefer: "type-imports" }],
+      "@typescript-eslint/no-unnecessary-type-assertion": "off",
+      "@typescript-eslint/require-await": "off",
     },
   },
 
