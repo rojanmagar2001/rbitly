@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { createApp } from "@/interfaces/http/createApp";
 import type { LinkRepository } from "@/domain/repositories/LinkRepository";
 import type { CachedLink, LinkCache } from "@/domain/caches/LinkCache";
+import type { ClickTracker } from "@/domain/analytics/ClickTracker";
+import type { ClickRepository } from "@/domain/repositories/ClickRepository";
 
 function makeRepo(overrides?: Partial<LinkRepository>): LinkRepository {
   const repo: LinkRepository = {
@@ -50,13 +52,40 @@ function makeCache(seed?: Record<string, CachedLink | undefined>) {
   return { cache, calls, store };
 }
 
+function makeClickTracker() {
+  const calls: Array<{ linkId: string }> = [];
+
+  const tracker: ClickTracker = {
+    async track(evt) {
+      calls.push({ linkId: evt.linkId });
+    },
+  };
+
+  return { tracker, calls };
+}
+
+const noopClickRepo: ClickRepository = {
+  async createClick() {},
+  async getStatsByLinkId() {
+    return { totalClicks: 0, lastClickedAt: null };
+  },
+};
+
 describe("GET /:code redirect", () => {
-  it("cache miss -> loads from repo -> caches -> redirects 302", async () => {
-    const { cache, calls, store } = makeCache();
+  it("cache miss -> loads from repo -> caches -> redirects 302 and tracks click", async () => {
+    const { cache, calls: cacheCalls, store } = makeCache();
+    const { tracker, calls: trackerCalls } = makeClickTracker();
 
     const app = await createApp({
       logger: false,
-      deps: { linkRepository: makeRepo(), linkCache: cache, ipHashSalt: "test-salt" },
+      deps: {
+        linkRepository: makeRepo(),
+        linkCache: cache,
+        rateLimiter: null,
+        clickTracker: tracker,
+        clickRepository: noopClickRepo,
+        ipHashSalt: "test-salt",
+      },
     });
 
     const res = await app.inject({ method: "GET", url: "/abc123" });
@@ -65,16 +94,19 @@ describe("GET /:code redirect", () => {
     expect(res.headers.location).toBe("https://example.com");
     expect(res.headers["cache-control"]).toBe("no-store");
 
-    expect(calls.get).toBe(1);
-    expect(calls.set).toBe(1);
-    expect(calls.lastTtl).toBe(60 * 60);
+    expect(cacheCalls.get).toBe(1);
+    expect(cacheCalls.set).toBe(1);
+    expect(cacheCalls.lastTtl).toBe(60 * 60);
     expect(store.get("abc123")?.originalUrl).toBe("https://example.com");
+
+    expect(trackerCalls.length).toBe(1);
+    expect(trackerCalls[0]?.linkId).toBe("id-1");
 
     await app.close();
   });
 
-  it("cache hit -> does not call repo -> redirects 302", async () => {
-    const { cache, calls } = makeCache({
+  it("cache hit -> does not call repo -> redirects 302 and tracks click", async () => {
+    const { cache, calls: cacheCalls } = makeCache({
       abc123: {
         code: "abc123",
         originalUrl: "https://cached.example",
@@ -83,15 +115,35 @@ describe("GET /:code redirect", () => {
       },
     });
 
+    const { tracker, calls: trackerCalls } = makeClickTracker();
+
     const repo = makeRepo({
       async findByCode() {
-        throw new Error("repo should not be called on cache hit");
+        // NOTE: Step 7 ResolveLinkUseCase fetches linkId on cache hit.
+        // So repo WILL be called once on cache hit to get linkId unless you change the cache payload.
+        return {
+          id: "id-1",
+          code: "abc123",
+          originalUrl: "https://cached.example",
+          createdAt: new Date(),
+          expiresAt: null,
+          customAlias: null,
+          isActive: true,
+          createdByIpHash: "iphash",
+        };
       },
     });
 
     const app = await createApp({
       logger: false,
-      deps: { linkRepository: repo, linkCache: cache, ipHashSalt: "test-salt" },
+      deps: {
+        linkRepository: repo,
+        linkCache: cache,
+        rateLimiter: null,
+        clickTracker: tracker,
+        clickRepository: noopClickRepo,
+        ipHashSalt: "test-salt",
+      },
     });
 
     const res = await app.inject({ method: "GET", url: "/abc123" });
@@ -99,18 +151,29 @@ describe("GET /:code redirect", () => {
     expect(res.statusCode).toBe(302);
     expect(res.headers.location).toBe("https://cached.example");
 
-    expect(calls.get).toBe(1);
-    expect(calls.set).toBe(0);
+    expect(cacheCalls.get).toBe(1);
+    expect(cacheCalls.set).toBe(0);
+
+    expect(trackerCalls.length).toBe(1);
+    expect(trackerCalls[0]?.linkId).toBe("id-1");
 
     await app.close();
   });
 
   it("unknown code -> 404", async () => {
     const { cache } = makeCache();
+    const { tracker } = makeClickTracker();
 
     const app = await createApp({
       logger: false,
-      deps: { linkRepository: makeRepo(), linkCache: cache, ipHashSalt: "test-salt" },
+      deps: {
+        linkRepository: makeRepo(),
+        linkCache: cache,
+        rateLimiter: null,
+        clickTracker: tracker,
+        clickRepository: noopClickRepo,
+        ipHashSalt: "test-salt",
+      },
     });
 
     const res = await app.inject({ method: "GET", url: "/nope" });

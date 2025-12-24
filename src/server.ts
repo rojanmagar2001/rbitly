@@ -5,6 +5,9 @@ import { PrismaLinkRepository } from "./infrastructure/repositories/PrismaLinkRe
 import { RedisLinkCache } from "./infrastructure/cache/RedisLinkCache";
 import { createRedisClient } from "./infrastructure/redis/client";
 import { RedisRateLimiter } from "./infrastructure/rate-limit/RedisRateLimiter";
+import { RedisClickTracker } from "./infrastructure/analytics/RedisClickTracker";
+import { ClickWorker } from "./infrastructure/analytics/ClickWorker";
+import { PrismaClickRepository } from "./infrastructure/repositories/PrismaClickRepository";
 
 function parsePort(value: string | undefined): number {
   if (!value) return 3000;
@@ -12,6 +15,10 @@ function parsePort(value: string | undefined): number {
   const port = Number(value);
   if (!Number.isInteger(port) || port <= 0 || port > 65535) return 3000;
   return port;
+}
+
+class NoopClickTracker {
+  async track(): Promise<void> {}
 }
 
 //
@@ -24,6 +31,7 @@ function parsePort(value: string | undefined): number {
 async function main(): Promise<void> {
   const prisma = createPrismaClient();
   const linkRepository = new PrismaLinkRepository(prisma);
+  const clickRepository = new PrismaClickRepository(prisma);
 
   const ipHashSalt = process.env["IP_HASH_SALT"] ?? "dev-unsafe-salt";
 
@@ -33,12 +41,20 @@ async function main(): Promise<void> {
   const linkCache = redis ? new RedisLinkCache(redis) : null;
   const rateLimiter = redis ? new RedisRateLimiter(redis) : null;
 
+  const clickTracker = redis ? new RedisClickTracker(redis) : new NoopClickTracker();
+
+  // Start worker only if Redis exists (queue transport)
+  const worker = redis ? new ClickWorker(redis, clickRepository) : null;
+  if (worker) await worker.start();
+
   const app = await createApp({
     logger: true,
     deps: {
       linkRepository,
       linkCache,
       rateLimiter,
+      clickTracker,
+      clickRepository,
       ipHashSalt,
     },
   });

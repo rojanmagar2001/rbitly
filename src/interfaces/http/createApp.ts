@@ -6,6 +6,8 @@ import { registerLinkRoutes } from "./routes/links";
 import { registerErrorHandler } from "./error/errorHandler";
 import { ResolveLinkUseCase } from "@/application/use-cases/ResolveLinkUseCase";
 import { registerRedirectRoute } from "./routes/redirect";
+import { GetLinkStatsUseCase } from "@/application/use-cases/GetLinkStatsUseCase";
+import { registerStatsRoutes } from "./routes/stats";
 
 export type CreateAppOptions = {
   logger?: boolean;
@@ -36,12 +38,24 @@ export async function createApp(options: CreateAppOptions): Promise<FastifyInsta
     { defaultCacheTtlSeconds: 60 * 60 },
   );
 
+  const getLinkStatsUseCase = new GetLinkStatsUseCase(
+    options.deps.linkRepository,
+    options.deps.clickRepository,
+  );
+
   await registerLinkRoutes(app, {
     ipHashSalt: options.deps.ipHashSalt,
     linkUseCase: createLinkUseCase,
     rateLimiter: options.deps.rateLimiter,
   });
-  await registerRedirectRoute(app, { resolveLinkUseCase });
+
+  await registerRedirectRoute(app, {
+    resolveLinkUseCase,
+    clickTracker: options.deps.clickTracker,
+    ipHashSalt: options.deps.ipHashSalt,
+  });
+
+  await registerStatsRoutes(app, { getLinkStatsUseCase });
 
   return app;
 }

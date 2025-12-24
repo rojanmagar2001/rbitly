@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createApp } from "@/interfaces/http/createApp";
 import type { LinkRepository } from "@/domain/repositories/LinkRepository";
-import type { RateLimiter } from "@/domain/rate-limit/RateLimiter";
-import type { RateLimitResult } from "@/domain/rate-limit/RateLimiter";
+import type { RateLimiter, RateLimitResult } from "@/domain/rate-limit/RateLimiter";
+import type { ClickRepository } from "@/domain/repositories/ClickRepository";
+import type { ClickTracker } from "@/domain/analytics/ClickTracker";
 
 function makeRepo(): LinkRepository {
   return {
@@ -26,7 +27,6 @@ function makeRepo(): LinkRepository {
 
 function makeLimiter(allowedCount: number): RateLimiter {
   let count = 0;
-
   return {
     async consume(): Promise<RateLimitResult> {
       count++;
@@ -36,6 +36,15 @@ function makeLimiter(allowedCount: number): RateLimiter {
   };
 }
 
+const noopTracker: ClickTracker = { async track() {} };
+
+const noopClickRepo: ClickRepository = {
+  async createClick() {},
+  async getStatsByLinkId() {
+    return { totalClicks: 0, lastClickedAt: null };
+  },
+};
+
 describe("rate limiting: POST /api/links", () => {
   it("returns 429 after limit is exceeded", async () => {
     const app = await createApp({
@@ -44,6 +53,8 @@ describe("rate limiting: POST /api/links", () => {
         linkRepository: makeRepo(),
         linkCache: null,
         rateLimiter: makeLimiter(2),
+        clickTracker: noopTracker,
+        clickRepository: noopClickRepo,
         ipHashSalt: "test-salt",
       },
     });

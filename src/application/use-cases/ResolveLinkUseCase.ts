@@ -4,6 +4,7 @@ import { NotFoundError } from "@/domain/errors/NotFoundError";
 
 export type ResolveLinkResult = {
   code: string;
+  linkId: string;
   originalUrl: string;
 };
 
@@ -35,7 +36,14 @@ export class ResolveLinkUseCase {
         if (!cached.isActive || isExpired(expiresAt, now)) {
           throw new NotFoundError("Link not found.");
         }
-        return { code, originalUrl: cached.originalUrl };
+
+        // Cache doesn't store linkId (by design), so fall through to repo for linkId.
+        // Keep it small: repo lookup only when cache hit (trade-off).
+        const link = await this.repo.findByCode(code);
+        if (!link || !link.isActive || isExpired(link.expiresAt, now))
+          throw new NotFoundError("Link not found.");
+
+        return { code, linkId: link.id, originalUrl: cached.originalUrl };
       }
     }
 
@@ -60,6 +68,6 @@ export class ResolveLinkUseCase {
       }
     }
 
-    return { code, originalUrl: link.originalUrl };
+    return { code, linkId: link.id, originalUrl: link.originalUrl };
   }
 }

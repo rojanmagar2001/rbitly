@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { createApp } from "@/interfaces/http/createApp";
 import type { LinkRepository } from "@/domain/repositories/LinkRepository";
+import type { ClickRepository } from "@/domain/repositories/ClickRepository";
+import type { ClickTracker } from "@/domain/analytics/ClickTracker";
 
 function makeRepo(): LinkRepository {
   return {
@@ -22,11 +24,29 @@ function makeRepo(): LinkRepository {
   };
 }
 
+const noopTracker: ClickTracker = {
+  async track() {},
+};
+
+const noopClickRepo: ClickRepository = {
+  async createClick() {},
+  async getStatsByLinkId() {
+    return { totalClicks: 0, lastClickedAt: null };
+  },
+};
+
 describe("POST /api/links", () => {
   it("creates a link with generated code", async () => {
     const app = await createApp({
       logger: false,
-      deps: { linkRepository: makeRepo(), linkCache: null, ipHashSalt: "test-salt" },
+      deps: {
+        linkRepository: makeRepo(),
+        linkCache: null,
+        rateLimiter: null,
+        clickTracker: noopTracker,
+        clickRepository: noopClickRepo,
+        ipHashSalt: "test-salt",
+      },
     });
 
     const res = await app.inject({
@@ -49,7 +69,14 @@ describe("POST /api/links", () => {
   it("creates a link with customAlias as code", async () => {
     const app = await createApp({
       logger: false,
-      deps: { linkRepository: makeRepo(), linkCache: null, ipHashSalt: "test-salt" },
+      deps: {
+        linkRepository: makeRepo(),
+        linkCache: null,
+        rateLimiter: null,
+        clickTracker: noopTracker,
+        clickRepository: noopClickRepo,
+        ipHashSalt: "test-salt",
+      },
     });
 
     const res = await app.inject({
@@ -68,7 +95,14 @@ describe("POST /api/links", () => {
   it("returns 400 for invalid url", async () => {
     const app = await createApp({
       logger: false,
-      deps: { linkRepository: makeRepo(), linkCache: null, ipHashSalt: "test-salt" },
+      deps: {
+        linkRepository: makeRepo(),
+        linkCache: null,
+        rateLimiter: null,
+        clickTracker: noopTracker,
+        clickRepository: noopClickRepo,
+        ipHashSalt: "test-salt",
+      },
     });
 
     const res = await app.inject({
