@@ -35,6 +35,9 @@ async function main(): Promise<void> {
 
   const ipHashSalt = process.env["IP_HASH_SALT"] ?? "dev-unsafe-salt";
 
+  // NEW: cookie signing secret
+  const cookieSecret = process.env["COOKIE_SECRET"] ?? "dev-cookie-secret-change-me";
+
   const redisUrl = process.env["REDIS_URL"];
   const redis = redisUrl ? createRedisClient(redisUrl) : null;
 
@@ -56,6 +59,7 @@ async function main(): Promise<void> {
       clickTracker,
       clickRepository,
       ipHashSalt,
+      cookieSecret,
     },
   });
 

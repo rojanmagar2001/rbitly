@@ -55,6 +55,7 @@ export async function startTestServer(): Promise<{ app: FastifyInstance; url: st
       clickTracker: noopTracker,
       clickRepository: noopClickRepo,
       ipHashSalt: "test-salt",
+      cookieSecret: "test-cookie-secret",
     },
   });
 

@@ -11,4 +11,6 @@ export type AppDeps = {
   clickTracker: ClickTracker;
   clickRepository: ClickRepository;
   ipHashSalt: string;
+  // NEW: used to sign cookies (recent links)
+  cookieSecret: string;
 };

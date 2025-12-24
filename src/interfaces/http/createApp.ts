@@ -14,6 +14,7 @@ import path from "node:path";
 import view from "@fastify/view";
 import nunjucks from "nunjucks";
 import { registerHomeRoutes } from "./web/routes/home";
+import cookie from "@fastify/cookie";
 
 export type CreateAppOptions = {
   logger?: boolean;
@@ -23,6 +24,11 @@ export type CreateAppOptions = {
 export async function createApp(options: CreateAppOptions): Promise<FastifyInstance> {
   const app = fastify({
     logger: options.logger ?? true,
+  });
+
+  // Cookies (signed)
+  await app.register(cookie, {
+    secret: options.deps.cookieSecret,
   });
 
   // NOTE: trustProxy is critical when behind proxies; we’ll configure later with env.
