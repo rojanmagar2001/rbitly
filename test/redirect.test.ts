@@ -4,6 +4,8 @@ import type { LinkRepository } from "@/domain/repositories/LinkRepository";
 import type { CachedLink, LinkCache } from "@/domain/caches/LinkCache";
 import type { ClickTracker } from "@/domain/analytics/ClickTracker";
 import type { ClickRepository } from "@/domain/repositories/ClickRepository";
+import client from "prom-client";
+import { register } from "node:module";
 
 function makeRepo(overrides?: Partial<LinkRepository>): LinkRepository {
   const repo: LinkRepository = {
@@ -76,6 +78,7 @@ describe("GET /:code redirect", () => {
     const { cache, calls: cacheCalls, store } = makeCache();
     const { tracker, calls: trackerCalls } = makeClickTracker();
 
+    const registry = new client.Registry();
     const app = await createApp({
       logger: false,
       deps: {
@@ -85,6 +88,9 @@ describe("GET /:code redirect", () => {
         clickTracker: tracker,
         clickRepository: noopClickRepo,
         ipHashSalt: "test-salt",
+        cookieSecret: "test-cookie-secret",
+        metricsRegistry: registry,
+        metricsToken: null,
       },
     });
 
@@ -134,6 +140,8 @@ describe("GET /:code redirect", () => {
       },
     });
 
+    const registry = new client.Registry();
+
     const app = await createApp({
       logger: false,
       deps: {
@@ -143,6 +151,9 @@ describe("GET /:code redirect", () => {
         clickTracker: tracker,
         clickRepository: noopClickRepo,
         ipHashSalt: "test-salt",
+        cookieSecret: "test-cookie-secret",
+        metricsRegistry: registry,
+        metricsToken: null,
       },
     });
 
@@ -164,6 +175,8 @@ describe("GET /:code redirect", () => {
     const { cache } = makeCache();
     const { tracker } = makeClickTracker();
 
+    const registry = new client.Registry();
+
     const app = await createApp({
       logger: false,
       deps: {
@@ -173,6 +186,9 @@ describe("GET /:code redirect", () => {
         clickTracker: tracker,
         clickRepository: noopClickRepo,
         ipHashSalt: "test-salt",
+        cookieSecret: "test-cookie-secret",
+        metricsRegistry: registry,
+        metricsToken: null,
       },
     });
 

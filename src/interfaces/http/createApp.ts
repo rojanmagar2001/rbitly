@@ -1,3 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
+ 
+ 
+ 
+
 import fastify, { type FastifyInstance } from "fastify";
 import { registerHealthRoute } from "./routes/health";
 import type { AppDeps } from "./types";
@@ -15,6 +23,8 @@ import view from "@fastify/view";
 import nunjucks from "nunjucks";
 import { registerHomeRoutes } from "./web/routes/home";
 import cookie from "@fastify/cookie";
+import { createHttpMetrics } from "@/infrastructure/metrics/httpMetrics";
+import { registerMetricsRoute } from "./routes/metrics";
 
 export type CreateAppOptions = {
   logger?: boolean;
@@ -51,6 +61,30 @@ export async function createApp(options: CreateAppOptions): Promise<FastifyInsta
       autoescape: true,
       throwOnUndefined: false,
     },
+  });
+
+  // Metrics instrumentation
+  const httpMetrics = createHttpMetrics(options.deps.metricsRegistry);
+
+  app.addHook("onRequest", async (req) => {
+    const route = req.routeOptions?.url ?? "unknown";
+    (req as any).__metricsRoute = route;
+    (req as any).__startHr = process.hrtime.bigint();
+    httpMetrics.httpInFlight.inc({ method: req.method, route });
+  });
+
+  app.addHook("onResponse", async (req, reply) => {
+    const route = (req as any).__metricsRoute ?? "unknown";
+    const start = (req as any).__startHr as bigint | undefined;
+    if (start) {
+      const diffNs = process.hrtime.bigint() - start;
+      const seconds = Number(diffNs) / 1_000_000_000;
+      httpMetrics.httpRequestDuration.observe(
+        { method: req.method, route, status_code: String(reply.statusCode) },
+        seconds,
+      );
+    }
+    httpMetrics.httpInFlight.dec({ method: req.method, route });
   });
 
   registerErrorHandler(app);
@@ -90,6 +124,11 @@ export async function createApp(options: CreateAppOptions): Promise<FastifyInsta
   });
 
   await registerStatsRoutes(app, { getLinkStatsUseCase });
+
+  await registerMetricsRoute(app, {
+    registry: options.deps.metricsRegistry,
+    metricsToken: options.deps.metricsToken,
+  });
 
   return app;
 }

@@ -3,6 +3,7 @@ import type { LinkCache } from "@/domain/caches/LinkCache";
 import type { RateLimiter } from "@/domain/rate-limit/RateLimiter";
 import type { ClickRepository } from "@/domain/repositories/ClickRepository";
 import type { LinkRepository } from "@/domain/repositories/LinkRepository";
+import type { Registry } from "prom-client";
 
 export type AppDeps = {
   linkRepository: LinkRepository;
@@ -13,4 +14,7 @@ export type AppDeps = {
   ipHashSalt: string;
   // NEW: used to sign cookies (recent links)
   cookieSecret: string;
+  // NEW
+  metricsRegistry: Registry;
+  metricsToken: string | null;
 };

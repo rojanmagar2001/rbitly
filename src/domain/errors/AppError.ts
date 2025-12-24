@@ -3,6 +3,7 @@ export type AppErrorCode =
   | "NOT_FOUND"
   | "CONFLICT"
   | "RATE_LIMIT"
+  | "UNAUTHORIZED"
   | "INTERNAL";
 
 export abstract class AppError extends Error {

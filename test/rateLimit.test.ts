@@ -4,6 +4,7 @@ import type { LinkRepository } from "@/domain/repositories/LinkRepository";
 import type { RateLimiter, RateLimitResult } from "@/domain/rate-limit/RateLimiter";
 import type { ClickRepository } from "@/domain/repositories/ClickRepository";
 import type { ClickTracker } from "@/domain/analytics/ClickTracker";
+import client from "prom-client";
 
 function makeRepo(): LinkRepository {
   return {
@@ -47,6 +48,8 @@ const noopClickRepo: ClickRepository = {
 
 describe("rate limiting: POST /api/links", () => {
   it("returns 429 after limit is exceeded", async () => {
+    const registry = new client.Registry();
+
     const app = await createApp({
       logger: false,
       deps: {
@@ -56,6 +59,9 @@ describe("rate limiting: POST /api/links", () => {
         clickTracker: noopTracker,
         clickRepository: noopClickRepo,
         ipHashSalt: "test-salt",
+        cookieSecret: "test-cookie-secret",
+        metricsRegistry: registry,
+        metricsToken: null,
       },
     });
 

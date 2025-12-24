@@ -11,6 +11,7 @@ import type { ClickTracker } from "@/domain/analytics/ClickTracker";
 import type { RateLimiter } from "@/domain/rate-limit/RateLimiter";
 import type { LinkCache } from "@/domain/caches/LinkCache";
 import type { FastifyInstance } from "fastify";
+import client from "prom-client";
 
 class InMemoryLinkRepo implements LinkRepository {
   private byCode = new Map<string, any>();
@@ -46,6 +47,7 @@ const noopClickRepo: ClickRepository = {
 };
 
 export async function startTestServer(): Promise<{ app: FastifyInstance; url: string }> {
+  const registry = new client.Registry();
   const app = await createApp({
     logger: false,
     deps: {
@@ -56,6 +58,8 @@ export async function startTestServer(): Promise<{ app: FastifyInstance; url: st
       clickRepository: noopClickRepo,
       ipHashSalt: "test-salt",
       cookieSecret: "test-cookie-secret",
+      metricsRegistry: registry,
+      metricsToken: null,
     },
   });
 

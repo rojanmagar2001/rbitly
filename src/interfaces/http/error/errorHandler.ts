@@ -16,6 +16,7 @@ const APP_ERROR_CODES: ReadonlySet<AppErrorCode> = new Set([
   "CONFLICT",
   "RATE_LIMIT",
   "INTERNAL",
+  "UNAUTHORIZED",
 ]);
 
 function toValidationError(err: ZodError): ValidationError {
@@ -45,6 +46,8 @@ function statusForAppError(code: AppErrorCode): number {
       return 409;
     case "RATE_LIMIT":
       return 429;
+    case "UNAUTHORIZED":
+      return 401;
     default:
       return 500;
   }

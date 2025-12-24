@@ -3,6 +3,7 @@ import { createApp } from "@/interfaces/http/createApp";
 import type { LinkRepository } from "@/domain/repositories/LinkRepository";
 import type { ClickRepository } from "@/domain/repositories/ClickRepository";
 import type { ClickTracker } from "@/domain/analytics/ClickTracker";
+import client from "prom-client";
 
 const noopTracker: ClickTracker = { async track() {} };
 
@@ -39,6 +40,7 @@ function makeClickRepo(): ClickRepository {
 
 describe("GET /api/links/:code/stats", () => {
   it("returns aggregated stats", async () => {
+    const registry = new client.Registry();
     const app = await createApp({
       logger: false,
       deps: {
@@ -48,6 +50,9 @@ describe("GET /api/links/:code/stats", () => {
         clickTracker: noopTracker,
         clickRepository: makeClickRepo(),
         ipHashSalt: "test-salt",
+        cookieSecret: "test-cookie-secret",
+        metricsRegistry: registry,
+        metricsToken: null,
       },
     });
 
@@ -63,6 +68,7 @@ describe("GET /api/links/:code/stats", () => {
   });
 
   it("returns 404 for unknown code", async () => {
+    const registry = new client.Registry();
     const app = await createApp({
       logger: false,
       deps: {
@@ -72,6 +78,9 @@ describe("GET /api/links/:code/stats", () => {
         clickTracker: noopTracker,
         clickRepository: makeClickRepo(),
         ipHashSalt: "test-salt",
+        cookieSecret: "test-cookie-secret",
+        metricsRegistry: registry,
+        metricsToken: null,
       },
     });
 

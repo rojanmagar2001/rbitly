@@ -14,9 +14,7 @@ const noopRepo: LinkRepository = {
   },
 };
 
-const noopTracker: ClickTracker = {
-  async track() {},
-};
+const noopTracker: ClickTracker = { async track() {} };
 
 const noopClickRepo: ClickRepository = {
   async createClick() {},
@@ -25,8 +23,8 @@ const noopClickRepo: ClickRepository = {
   },
 };
 
-describe("GET /health", () => {
-  it("returns 200 with status ok", async () => {
+describe("GET /metrics", () => {
+  it("returns metrics text", async () => {
     const registry = new client.Registry();
 
     const app = await createApp({
@@ -44,9 +42,41 @@ describe("GET /health", () => {
       },
     });
 
-    const res = await app.inject({ method: "GET", url: "/health" });
+    const res = await app.inject({ method: "GET", url: "/metrics" });
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ status: "ok" });
+    expect(res.headers["content-type"]).toContain("text/plain");
+    expect(res.body).toContain("http_request_duration_seconds");
+
+    await app.close();
+  });
+
+  it("requires token when METRICS_TOKEN is set", async () => {
+    const registry = new client.Registry();
+
+    const app = await createApp({
+      logger: false,
+      deps: {
+        linkRepository: noopRepo,
+        linkCache: null,
+        rateLimiter: null,
+        clickTracker: noopTracker,
+        clickRepository: noopClickRepo,
+        ipHashSalt: "test-salt",
+        cookieSecret: "test-cookie-secret",
+        metricsRegistry: registry,
+        metricsToken: "secret",
+      },
+    });
+
+    const res = await app.inject({ method: "GET", url: "/metrics" });
+    expect(res.statusCode).toBe(401);
+
+    const ok = await app.inject({
+      method: "GET",
+      url: "/metrics",
+      headers: { authorization: "Bearer secret" },
+    });
+    expect(ok.statusCode).toBe(200);
 
     await app.close();
   });

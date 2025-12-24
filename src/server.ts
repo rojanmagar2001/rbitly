@@ -8,6 +8,7 @@ import { RedisRateLimiter } from "./infrastructure/rate-limit/RedisRateLimiter";
 import { RedisClickTracker } from "./infrastructure/analytics/RedisClickTracker";
 import { ClickWorker } from "./infrastructure/analytics/ClickWorker";
 import { PrismaClickRepository } from "./infrastructure/repositories/PrismaClickRepository";
+import { createMetrics } from "./infrastructure/metrics/registry";
 
 function parsePort(value: string | undefined): number {
   if (!value) return 3000;
@@ -38,6 +39,9 @@ async function main(): Promise<void> {
   // NEW: cookie signing secret
   const cookieSecret = process.env["COOKIE_SECRET"] ?? "dev-cookie-secret-change-me";
 
+  const metricsToken = process.env["METRICS_TOKEN"] ?? null;
+  const { registry } = createMetrics();
+
   const redisUrl = process.env["REDIS_URL"];
   const redis = redisUrl ? createRedisClient(redisUrl) : null;
 
@@ -60,6 +64,8 @@ async function main(): Promise<void> {
       clickRepository,
       ipHashSalt,
       cookieSecret,
+      metricsRegistry: registry,
+      metricsToken,
     },
   });
 

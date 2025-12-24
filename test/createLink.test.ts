@@ -3,6 +3,7 @@ import { createApp } from "@/interfaces/http/createApp";
 import type { LinkRepository } from "@/domain/repositories/LinkRepository";
 import type { ClickRepository } from "@/domain/repositories/ClickRepository";
 import type { ClickTracker } from "@/domain/analytics/ClickTracker";
+import client from "prom-client";
 
 function makeRepo(): LinkRepository {
   return {
@@ -37,6 +38,8 @@ const noopClickRepo: ClickRepository = {
 
 describe("POST /api/links", () => {
   it("creates a link with generated code", async () => {
+    const registry = new client.Registry();
+
     const app = await createApp({
       logger: false,
       deps: {
@@ -46,6 +49,9 @@ describe("POST /api/links", () => {
         clickTracker: noopTracker,
         clickRepository: noopClickRepo,
         ipHashSalt: "test-salt",
+        cookieSecret: "test-cookie-secret",
+        metricsRegistry: registry,
+        metricsToken: null,
       },
     });
 
@@ -67,6 +73,8 @@ describe("POST /api/links", () => {
   });
 
   it("creates a link with customAlias as code", async () => {
+    const registry = new client.Registry();
+
     const app = await createApp({
       logger: false,
       deps: {
@@ -76,6 +84,9 @@ describe("POST /api/links", () => {
         clickTracker: noopTracker,
         clickRepository: noopClickRepo,
         ipHashSalt: "test-salt",
+        cookieSecret: "test-cookie-secret",
+        metricsRegistry: registry,
+        metricsToken: null,
       },
     });
 
@@ -93,6 +104,8 @@ describe("POST /api/links", () => {
   });
 
   it("returns 400 for invalid url", async () => {
+    const registry = new client.Registry();
+
     const app = await createApp({
       logger: false,
       deps: {
@@ -102,6 +115,9 @@ describe("POST /api/links", () => {
         clickTracker: noopTracker,
         clickRepository: noopClickRepo,
         ipHashSalt: "test-salt",
+        cookieSecret: "test-cookie-secret",
+        metricsRegistry: registry,
+        metricsToken: null,
       },
     });
 
