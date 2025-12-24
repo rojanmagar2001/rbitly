@@ -23,6 +23,9 @@ jobs:
       - name: Activate pnpm
         run: corepack prepare pnpm@10.14.0 --activate
 
+      - name: Copy environment file
+        run: cp .env.ci .env
+
       - name: Install deps
         run: pnpm install --frozen-lockfile
 
