@@ -52,6 +52,6 @@ module.exports = [
 
   // Ignore build output
   {
-    ignores: ["dist/**", "node_modules/**"],
+    ignores: ["dist/**", "node_modules/**", "prisma.config.ts"],
   },
 ];
