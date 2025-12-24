@@ -8,9 +8,9 @@ export type AppErrorCode =
 export abstract class AppError extends Error {
   public abstract readonly code: AppErrorCode;
 
-  constructor(message: string, options?: { cause?: unknown }) {
+  constructor(message: string, _options?: { cause?: unknown }) {
     // Pass cause to Error when present (Node 20 supports it)
-    super(message, options?.cause !== undefined ? { cause: options.cause } : undefined);
+    super(message);
     this.name = this.constructor.name;
   }
 }

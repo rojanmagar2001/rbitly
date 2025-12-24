@@ -4,6 +4,7 @@ import { createPrismaClient } from "./infrastructure/prisma/client";
 import { PrismaLinkRepository } from "./infrastructure/repositories/PrismaLinkRepository";
 import { RedisLinkCache } from "./infrastructure/cache/RedisLinkCache";
 import { createRedisClient } from "./infrastructure/redis/client";
+import { RedisRateLimiter } from "./infrastructure/rate-limit/RedisRateLimiter";
 
 function parsePort(value: string | undefined): number {
   if (!value) return 3000;
@@ -27,12 +28,17 @@ async function main(): Promise<void> {
   const ipHashSalt = process.env["IP_HASH_SALT"] ?? "dev-unsafe-salt";
 
   const redisUrl = process.env["REDIS_URL"];
-  const linkCache = redisUrl ? new RedisLinkCache(createRedisClient(redisUrl)) : null;
+  const redis = redisUrl ? createRedisClient(redisUrl) : null;
+
+  const linkCache = redis ? new RedisLinkCache(redis) : null;
+  const rateLimiter = redis ? new RedisRateLimiter(redis) : null;
+
   const app = await createApp({
     logger: true,
     deps: {
       linkRepository,
       linkCache,
+      rateLimiter,
       ipHashSalt,
     },
   });

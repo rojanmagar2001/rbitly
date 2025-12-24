@@ -1,13 +1,18 @@
 {
   "compilerOptions": {
-    "target": "ESNEXT",
-    "module": "ESNEXT",
-    "moduleResolution": "bundler",
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
     "outDir": "dist",
     "rootDir": ".",
     "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "esModuleInterop": true,
     "types": ["node", "vitest/globals"],
     "baseUrl": ".",
     "paths": {
@@ -18,9 +23,8 @@
     "src/**/*.ts",
     "test/**/*.ts",
     "vitest.config.ts",
-    "tsup.config.ts",
-    "prisma.config.ts",
-    "tsdown.config.ts"
+    "tsdown.config.ts",
+    "prisma.config.ts"
   ],
   "exclude": ["node_modules", "dist"]
 }

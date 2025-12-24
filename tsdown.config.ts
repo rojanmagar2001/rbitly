@@ -2,7 +2,7 @@ import { defineConfig } from "tsdown";
 
 export default defineConfig({
   entry: ["src/server.ts"],
-  format: ["es"],
+  format: ["cjs"],
   dts: false,
   platform: "node",
   sourcemap: true,

@@ -39,6 +39,7 @@ export async function createApp(options: CreateAppOptions): Promise<FastifyInsta
   await registerLinkRoutes(app, {
     ipHashSalt: options.deps.ipHashSalt,
     linkUseCase: createLinkUseCase,
+    rateLimiter: options.deps.rateLimiter,
   });
   await registerRedirectRoute(app, { resolveLinkUseCase });
 

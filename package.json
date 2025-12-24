@@ -9,8 +9,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "tsdown --watch ./src --onSuccess \"node dist/server.mjs\"",
-    "start": "node dist/server.mjs",
+    "dev": "tsdown --watch ./src --onSuccess \"node dist/server.cjs\"",
+    "start": "node dist/server.cjs",
     "build": "tsdown",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",

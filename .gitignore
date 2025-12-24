@@ -9,4 +9,5 @@ coverage/
 
 # pnpm
 .pnpm-store/
+src/generated
 
