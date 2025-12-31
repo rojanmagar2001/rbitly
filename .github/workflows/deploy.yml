@@ -1,0 +1,121 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+# Permissions required for GHCR
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    name: Build and Push Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=long
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Optimization: cache layers in GitHub Actions
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to VPS
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Navigate to app directory (or create if not exists)
+            mkdir -p ~/rbitly
+            cd ~/rbitly
+
+            # Create environment file from secret
+            echo "${{ secrets.ENV_PRODUCTION }}" > .env.production
+
+            # Export env vars for docker stack
+            export $(grep -v '^#' .env.production | xargs)
+
+            # Log in to GHCR on the VPS
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # Pull latest yml if needed (using scp or cat)
+            # For simplicity, we create it here via cat
+            cat << 'EOF' > docker-stack.yml
+            $(cat docker-stack.yml)
+            EOF
+
+            # (Note: The above cat won't work easily in a script like this due to nesting)
+            # Better approach: The repository is checked out in this job too, 
+            # so we can use scp or transfer the file first.
+
+      - name: Copy Stack file to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-stack.yml"
+          target: "~/rbitly"
+
+      - name: Execute Deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/rbitly
+            # Load environment variables
+            export $(grep -v '^#' .env.production | xargs)
+
+            # Deploy stack
+            docker stack deploy -c docker-stack.yml rbitly --with-registry-auth --prune
+
+            # Wait for postgres to be ready
+            echo "Waiting for database to be ready..."
+            sleep 10
+
+            # Run migrations using the production image
+            echo "Running database migrations..."
+            docker run --rm \
+              --network rbitly-network-prod \
+              --env DATABASE_URL="$DATABASE_URL" \
+              ghcr.io/${{ github.repository }}:latest \
+              pnpm prisma migrate deploy
+
+            # Clean up old images
+            docker image prune -af --filter "until=24h"

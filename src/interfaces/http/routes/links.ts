@@ -13,7 +13,7 @@ const createLinkBodySchema = z.object({
     .max(64)
     .regex(/^[a-zA-Z0-9_-]+$/)
     .optional(),
-  expiresAt: z.date().optional(),
+  expiresAt: z.coerce.date().optional(),
 });
 
 function getRequesterIp(app: FastifyInstance, req: { ip: string }): string {

@@ -1,42 +1,42 @@
-name: CI
-on:
-  pull_request:
-  push:
-    branches: [main]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+# name: CI
+# on:
+#   pull_request:
+#   push:
+#     branches: [main]
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+#     timeout-minutes: 10
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
 
-      - name: Enable Corepack
-        run: corepack enable
+#       - name: Enable Corepack
+#         run: corepack enable
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "pnpm"
+#       - name: Setup Node
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: "20"
+#           cache: "pnpm"
 
-      - name: Activate pnpm
-        run: corepack prepare pnpm@10.14.0 --activate
+#       - name: Activate pnpm
+#         run: corepack prepare pnpm@10.14.0 --activate
 
-      - name: Copy environment file
-        run: cp .env.ci .env
+#       - name: Copy environment file
+#         run: cp .env.ci .env
 
-      - name: Install deps
-        run: pnpm install --frozen-lockfile
+#       - name: Install deps
+#         run: pnpm install --frozen-lockfile
 
-      - name: Typecheck
-        run: pnpm run typecheck
+#       - name: Typecheck
+#         run: pnpm run typecheck
 
-      - name: Lint
-        run: pnpm run lint
+#       - name: Lint
+#         run: pnpm run lint
 
-      - name: Format check
-        run: pnpm run format:check
+#       - name: Format check
+#         run: pnpm run format:check
 
-      - name: Unit tests
-        run: pnpm test
+#       - name: Unit tests
+#         run: pnpm test

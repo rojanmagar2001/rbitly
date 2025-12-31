@@ -1,12 +1,14 @@
 services:
   postgres:
     image: postgres:16-alpine
+    container_name: rbitly-postgres-dev
+    restart: on-failure
     environment:
       POSTGRES_USER: rbitly
       POSTGRES_PASSWORD: rbitly
       POSTGRES_DB: rbitly
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -15,11 +17,17 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    networks:
+      - rbitly-network
+    labels:
+      - "com.rbitly.environment=development"
 
   redis:
     image: redis:7-alpine
+    container_name: rbitly-redis-dev
+    restart: on-failure
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redisdata:/data
@@ -28,11 +36,18 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    networks:
+      - rbitly-network
+    labels:
+      - "com.rbitly.environment=development"
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
+    image: rbitly:development
+    container_name: rbitly-app-dev
+    restart: on-failure
     depends_on:
       postgres:
         condition: service_healthy
@@ -50,8 +65,19 @@ services:
       COOKIE_SECRET: dev-cookie-secret-change-me
       METRICS_TOKEN: ""
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-3000}:3000"
+    networks:
+      - rbitly-network
+    labels:
+      - "com.rbitly.environment=development"
 
 volumes:
   pgdata:
+    name: rbitly-pgdata-dev
   redisdata:
+    name: rbitly-redisdata-dev
+
+networks:
+  rbitly-network:
+    name: rbitly-network-dev
+    driver: bridge
