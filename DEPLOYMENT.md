@@ -1,15 +1,10 @@
-# Rbitly Deployment Guide
-
-This guide explains how to deploy the application to a remote VPS using Docker Swarm and GitHub Actions.
-
 ## VPS Requirements
 
 1.  **Server**: A Linux VPS (Ubuntu recommended).
-2.  **Docker**: Docker installed.
-3.  **Swarm**: Initialized Swarm mode.
-    ```bash
-    docker swarm init
-    ```
+2.  **SSH Access**: Root or a user with `sudo` privileges.
+
+> [!NOTE]
+> The deployment workflow now includes **Auto-Provisioning**. It will automatically check for and install Docker and initialize Docker Swarm on your VPS during the first deployment.
 
 ## GitHub Repository Secrets
 

@@ -5,8 +5,12 @@
 ############################
 FROM node:20-bookworm-slim AS base
 WORKDIR /app
-# Enable corepack (pnpm)
+
+# Enable corepack and configure pnpm
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
+
 ENV NODE_ENV=production
 ENV DATABASE_URL=postgresql://rbitly:rbitly@localhost:5432/rbitly?schema=public
 
@@ -18,10 +22,13 @@ FROM base AS deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
   openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
+
 # Copy only files needed to install deps
 COPY package.json pnpm-lock.yaml ./
-# Install all deps (including dev deps) for build stage
-RUN pnpm install --frozen-lockfile
+
+# Use cache mount for pnpm store to speed up repeated builds
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile
 
 ############################
 # Build

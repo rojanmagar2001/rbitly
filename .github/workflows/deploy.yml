@@ -24,6 +24,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v5
@@ -51,6 +54,34 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Provision VPS (Install Docker & Swarm)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Check if docker is installed
+            if ! command -v docker >/dev/null 2>&1; then
+              echo "Docker not found. Installing..."
+              curl -fsSL https://get.docker.com -o get-docker.sh
+              sudo sh get-docker.sh
+              sudo usermod -aG docker ${{ secrets.VPS_USER }}
+              rm get-docker.sh
+              echo "✓ Docker installed"
+            else
+              echo "✓ Docker is already installed"
+            fi
+
+            # Check if Swarm is initialized
+            if ! docker info | grep -q "Swarm: active"; then
+              echo "Swarm not active. Initializing..."
+              docker swarm init || echo "Swarm initialization failed (perhaps already part of another swarm)"
+              echo "✓ Swarm initialized"
+            else
+              echo "✓ Swarm is already active"
+            fi
 
       - name: Deploy to VPS via SSH
         uses: appleboy/ssh-action@v1.0.3
