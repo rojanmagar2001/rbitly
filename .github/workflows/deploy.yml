@@ -134,7 +134,7 @@ jobs:
             echo "Running database migrations..."
             docker run --rm \
               --network rbitly_rbitly-internal \
-              --env DATABASE_URL="$DATABASE_URL" \
+              --env-file .env.production \
               ghcr.io/${{ github.repository }}:latest \
               pnpm prisma migrate deploy
 

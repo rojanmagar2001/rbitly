@@ -164,10 +164,9 @@ stack-migrate:
 		echo "❌ Error: .env.production file not found!"; \
 		exit 1; \
 	fi
-	@export $$(grep -v '^#' .env.production | xargs) && \
-		docker run --rm \
+	@docker run --rm \
 			--network rbitly_rbitly-internal \
-			--env DATABASE_URL=$$DATABASE_URL \
+			--env-file .env.production \
 			ghcr.io/$${GITHUB_REPOSITORY_OWNER:-rojanmagar2001}/rbitly:latest \
 			pnpm prisma migrate deploy
 	@echo "✓ Migrations completed"
