@@ -166,7 +166,7 @@ stack-migrate:
 	fi
 	@export $$(grep -v '^#' .env.production | xargs) && \
 		docker run --rm \
-			--network rbitly-network-prod \
+			--network rbitly_rbitly-internal \
 			--env DATABASE_URL=$$DATABASE_URL \
 			ghcr.io/$${GITHUB_REPOSITORY_OWNER:-rojanmagar2001}/rbitly:latest \
 			pnpm prisma migrate deploy

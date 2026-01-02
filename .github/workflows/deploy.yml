@@ -103,16 +103,6 @@ jobs:
             # Log in to GHCR on the VPS
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # Pull latest yml if needed (using scp or cat)
-            # For simplicity, we create it here via cat
-            cat << 'EOF' > docker-stack.yml
-            $(cat docker-stack.yml)
-            EOF
-
-            # (Note: The above cat won't work easily in a script like this due to nesting)
-            # Better approach: The repository is checked out in this job too, 
-            # so we can use scp or transfer the file first.
-
       - name: Copy Stack file to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -143,7 +133,7 @@ jobs:
             # Run migrations using the production image
             echo "Running database migrations..."
             docker run --rm \
-              --network rbitly-network-prod \
+              --network rbitly_rbitly-internal \
               --env DATABASE_URL="$DATABASE_URL" \
               ghcr.io/${{ github.repository }}:latest \
               pnpm prisma migrate deploy

@@ -42,7 +42,7 @@ COPY postcss.config.cjs ./
 COPY prisma.config.ts ./
 COPY src/interfaces/http/web/assets ./src/interfaces/http/web/assets
 # Generate prisma client (if you use prisma generate in your workflow)
-RUN export DATABASE_URL=$DATABASE_URL pnpm prisma generate
+RUN pnpm run db:generate
 # Build CSS + app bundle
 RUN pnpm run css:build
 RUN pnpm run build
