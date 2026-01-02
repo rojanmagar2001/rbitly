@@ -121,14 +121,18 @@ jobs:
           script: |
             cd ~/rbitly
             # Load environment variables
-            export $(grep -v '^#' .env.production | xargs)
+            if [ -s .env.production ]; then
+              export $(grep -v '^#' .env.production | xargs)
+            else
+              echo "⚠️ Warning: .env.production is empty or missing! Check your ENV_PRODUCTION secret."
+            fi
 
             # Deploy stack
             docker stack deploy -c docker-stack.yml rbitly --with-registry-auth --prune
 
             # Wait for postgres to be ready
             echo "Waiting for database to be ready..."
-            sleep 10
+            sleep 15
 
             # Run migrations using the production image
             echo "Running database migrations..."

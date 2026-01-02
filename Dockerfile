@@ -12,7 +12,6 @@ ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
 ENV NODE_ENV=production
-ENV DATABASE_URL=postgresql://rbitly:rbitly@localhost:5432/rbitly?schema=public
 
 ############################
 # Dependencies (prod + build)
